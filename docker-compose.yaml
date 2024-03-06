@@ -1,0 +1,53 @@
+version: '3'
+volumes:
+    mysql_data:
+services:
+    first-app-nginx-service:
+        build:
+            context: .
+            dockerfile: ./nginx/Dockerfile
+        container_name: first-app-nginx-container
+        ports: ['8881:80']
+        volumes:
+            - ./app/:/var/www/html/
+        networks:
+            - first-app-network
+    first-app-php-service:
+        build:
+            context: .
+            dockerfile: ./php/Dockerfile
+        container_name: first-app-php-container
+        ports: ['9991:9000']
+        volumes:
+            - ./app/:/var/www/html/
+        networks:
+            - first-app-network
+    first-app-mysql-service:
+        image: mysql
+        container_name: first-app-mysql-container
+        command: ['--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci', '--authentication_policy=caching_sha2_password']
+        ports: ['3999:3306']
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+        volumes:
+            - ./mysql/:/var/lib/mysql
+        networks:
+            - first-app-network
+    first-app-phpmyadmin-service:
+        image: phpmyadmin/phpmyadmin:latest
+        container_name: first-app-phpmyadmin-container
+        environment:
+            PMA_HOST: first-app-mysql-service
+            PMA_USER: root
+            PMA_PASSWORD: root
+        ports: ['8882:80']
+        depends_on:
+            - first-app-mysql-service
+        volumes:
+            - ./phpmyadmin/:/var/www/html/phpmyadmin/
+        networks:
+            - first-app-network
+
+networks:
+    first-app-network:
+        driver: bridge
